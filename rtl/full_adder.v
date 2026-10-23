@@ -1,4 +1,4 @@
-// 1-bit Full Adder using continuous assign statements
+// 1-bit full adder
 module full_adder (
     input  wire a,
     input  wire b,

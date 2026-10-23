@@ -1,5 +1,5 @@
-// 4-bit x 4-bit Unsigned Array Multiplier with Registered Inputs and Output
-// Latency: 2 clock cycles (16 flip-flops total: 4 for a, 4 for b, 8 for p)
+// 4x4 unsigned array multiplier. Inputs and output are registered,
+// so the result appears 2 clock cycles after the inputs.
 module mult_array (
     input  wire       clk,
     input  wire       rst_n,
@@ -8,9 +8,7 @@ module mult_array (
     output reg  [7:0] p
 );
 
-    // -------------------------------------------------------------------------
-    // 1. Input Registers (8 Flip-Flops)
-    // -------------------------------------------------------------------------
+    // Input registers
     reg [3:0] a_reg;
     reg [3:0] b_reg;
 
@@ -24,24 +22,21 @@ module mult_array (
         end
     end
 
-    // -------------------------------------------------------------------------
-    // 2. Partial Products: 16 AND gates (pp_i[j] = a_reg[j] & b_reg[i])
-    // -------------------------------------------------------------------------
+    // Partial products: ppN[j] = a_reg[j] & b_reg[N]
     wire [3:0] pp0 = a_reg & {4{b_reg[0]}};
     wire [3:0] pp1 = a_reg & {4{b_reg[1]}};
     wire [3:0] pp2 = a_reg & {4{b_reg[2]}};
     wire [3:0] pp3 = a_reg & {4{b_reg[3]}};
 
-    // -------------------------------------------------------------------------
-    // 3. Array Structure (Row 0 to Row 3)
-    // -------------------------------------------------------------------------
+    // Adder array. sN and cN are the sums and carries of row N;
+    // rN is what row N passes down to row N+1.
     wire [7:0] prod_comb;
 
-    // Row 0: no adders
+    // Row 0 has no adders
     assign prod_comb[0] = pp0[0];
     wire [3:0] r0 = {1'b0, pp0[3], pp0[2], pp0[1]};
 
-    // Row 1: 4 full adders
+    // Row 1
     wire [3:0] s1;
     wire [4:0] c1;
     assign c1[0] = 1'b0;
@@ -62,7 +57,7 @@ module mult_array (
     assign prod_comb[1] = s1[0];
     wire [3:0] r1 = {c1[4], s1[3], s1[2], s1[1]};
 
-    // Row 2: 4 full adders
+    // Row 2
     wire [3:0] s2;
     wire [4:0] c2;
     assign c2[0] = 1'b0;
@@ -82,7 +77,7 @@ module mult_array (
     assign prod_comb[2] = s2[0];
     wire [3:0] r2 = {c2[4], s2[3], s2[2], s2[1]};
 
-    // Row 3: 4 full adders
+    // Row 3
     wire [3:0] s3;
     wire [4:0] c3;
     assign c3[0] = 1'b0;
@@ -102,9 +97,7 @@ module mult_array (
     assign prod_comb[3]   = s3[0];
     assign prod_comb[7:4] = {c3[4], s3[3], s3[2], s3[1]};
 
-    // -------------------------------------------------------------------------
-    // 4. Output Register (8 Flip-Flops)
-    // -------------------------------------------------------------------------
+    // Output register
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             p <= 8'b00000000;
